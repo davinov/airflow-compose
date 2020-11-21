@@ -1,0 +1,73 @@
+version: "3.8"
+services:
+  mysql:
+    image: mysql:8
+    command: --explicit_defaults_for_timestamp=1
+    volumes:
+      - ./db:/var/lib/mysql
+    environment:
+      - MYSQL_RANDOM_ROOT_PASSWORD=yes
+      - MYSQL_USER=airflow
+      - MYSQL_PASSWORD=pliplop
+      - MYSQL_DATABASE=airflow
+    restart: on-failure
+
+  redis:
+    image: redis
+    volumes:
+      - ./redis-db:/data
+    restart: on-failure
+
+  webserver:
+    image: apache/airflow:1.10.12
+    command: webserver
+    ports:
+      - 8080:8080
+    volumes:
+      - ./data:/opt/airflow
+    links:
+      - mysql
+    depends_on:
+      - mysql
+    restart: on-failure
+
+  scheduler:
+    image: apache/airflow:1.10.12
+    command: scheduler
+    volumes:
+      - ./data:/opt/airflow
+    links:
+      - mysql
+      - redis
+    depends_on:
+      - mysql
+      - redis
+    restart: on-failure
+
+  flower:
+    image: apache/airflow:1.10.12
+    command: flower
+    volumes:
+      - ./data:/opt/airflow
+    ports:
+      - 5555:5555
+    links:
+      - mysql
+      - redis
+    depends_on:
+      - redis
+      - mysql
+    restart: on-failure
+
+  worker:
+    build: ./dockerfiles/worker
+    command: worker
+    volumes:
+      - ./data:/opt/airflow
+    links:
+      - mysql
+      - redis
+    depends_on:
+      - mysql
+      - redis
+    restart: on-failure

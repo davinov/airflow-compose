@@ -1,0 +1,8 @@
+# Data in container volumes
+data/airflow.db
+data/logs
+db/
+redis-db/
+
+# pyenv
+.python-version
